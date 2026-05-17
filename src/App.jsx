@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import AppHeader from './components/AppHeader.jsx'
 import BottomNav from './components/BottomNav.jsx'
-import StatsBar from './components/StatsBar.jsx'
 import HomePage from './pages/HomePage.jsx'
 import BankPage from './pages/BankPage.jsx'
 import MissionPage from './pages/MissionPage.jsx'
@@ -9,6 +7,8 @@ import OnboardingPage from './pages/OnboardingPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import ResultPage from './pages/ResultPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import RatingPage from './pages/RatingPage.jsx'
+import MenuPage from './pages/MenuPage.jsx'
 import { initialProgress, missions, modules } from './data/mockData.js'
 import { translations } from './i18n/translations.js'
 
@@ -32,6 +32,8 @@ const screens = {
   mission: 'mission',
   result: 'result',
   profile: 'profile',
+  rating: 'rating',
+  menu: 'menu',
 }
 
 function clamp(value, min, max) {
@@ -169,6 +171,7 @@ function App() {
   const [currentMissionId, setCurrentMissionId] = useState('bank-2')
   const [missionResult, setMissionResult] = useState(null)
   const [notice, setNotice] = useState('')
+  const [previousScreen, setPreviousScreen] = useState(screens.home)
 
   const t = translations[language]
   const completedCount = progress.completedMissionIds.length
@@ -199,14 +202,6 @@ function App() {
   const activeMission = currentMissions.find((mission) => mission.status === 'active')
   const currentMission =
     currentMissions.find((mission) => mission.id === currentMissionId) || activeMission
-
-  const recommendedMission = useMemo(() => {
-    const availableModule = moduleStates.find((module) => module.status === 'active')
-    if (!availableModule) return null
-    return getMissionsWithStatus(availableModule.id, progress.completedMissionIds).find(
-      (mission) => mission.status === 'active',
-    )
-  }, [moduleStates, progress.completedMissionIds])
 
   const nextActionLabel = useMemo(() => {
     if (!missionResult?.mission) return t.nextMission
@@ -394,6 +389,15 @@ function App() {
     setScreen(screens.home)
   }
 
+  const openMenu = () => {
+    setPreviousScreen(screen === screens.menu ? previousScreen : screen)
+    setScreen(screens.menu)
+  }
+
+  const closeMenu = () => {
+    setScreen(previousScreen || screens.home)
+  }
+
   if (!isAuthenticated && !onboardingCompleted) {
     return (
       <OnboardingPage
@@ -423,33 +427,16 @@ function App() {
 
   return (
     <div className={`app-shell screen-${screen}`}>
-      {(screen === screens.home || screen === screens.module || screen === screens.profile) && (
-        <AppHeader
-          currentScreen={screen}
-          language={language}
-          streak={streak}
-          t={t}
-          theme={theme}
-          onChangeLanguage={setLanguage}
-          onGoHome={() => setScreen(screens.home)}
-          onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-        />
-      )}
-      {(screen === screens.home || screen === screens.module || screen === screens.profile) && (
-        <div className="app-stats-wrap">
-          <StatsBar progress={{ ...progress, level }} t={t} totalMissions={totalMissions} />
-        </div>
-      )}
       <main className="app-main">
         {screen === screens.home && (
           <HomePage
             language={language}
             modules={moduleStates}
-            recommendedMission={recommendedMission}
             progress={{ ...progress, level }}
+            streak={streak}
             t={t}
+            onOpenMenu={openMenu}
             onOpenModule={openModule}
-            userName={displayName}
           />
         )}
 
@@ -469,6 +456,8 @@ function App() {
           <MissionPage
             language={language}
             mission={currentMission}
+            missionIndex={currentMissions.findIndex((mission) => mission.id === currentMission.id) + 1}
+            totalMissions={currentMissions.length}
             t={t}
             onBack={() => setScreen(screens.module)}
             onSubmit={finishMission}
@@ -490,26 +479,57 @@ function App() {
 
         {screen === screens.profile && (
           <ProfilePage
-            completedModules={moduleStates.filter((module) => module.status === 'completed').length}
             progress={{ ...progress, level }}
             t={t}
             streak={streak}
             totalCompletedMissions={completedCount}
+            totalMissions={totalMissions}
             userName={displayName}
+            onBack={() => setScreen(previousScreen === screens.menu ? screens.menu : screens.home)}
+            onOpenMenu={openMenu}
             onLogout={logout}
             onResetProgress={resetProgress}
             onRestoreReputation={restoreReputation}
           />
         )}
+
+        {screen === screens.rating && (
+          <RatingPage
+            progress={progress}
+            streak={streak}
+            t={t}
+            userName={displayName}
+            onOpenMenu={openMenu}
+          />
+        )}
+
+        {screen === screens.menu && (
+          <MenuPage
+            language={language}
+            streak={streak}
+            t={t}
+            theme={theme}
+            onChangeLanguage={setLanguage}
+            onClose={closeMenu}
+            onLogout={logout}
+            onOpenProfile={() => {
+              setPreviousScreen(screens.menu)
+              setScreen(screens.profile)
+            }}
+            onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          />
+        )}
       </main>
 
-      <BottomNav
-        currentScreen={screen}
-        t={t}
-        onGoHome={() => setScreen(screens.home)}
-        onGoModules={() => setScreen(screens.home)}
-        onGoProfile={() => setScreen(screens.profile)}
-      />
+      {(screen === screens.home || screen === screens.rating) && (
+        <BottomNav
+          currentScreen={screen}
+          t={t}
+          onGoHome={() => setScreen(screens.home)}
+          onGoModules={() => setScreen(screens.module)}
+          onGoRating={() => setScreen(screens.rating)}
+        />
+      )}
     </div>
   )
 }

@@ -1,13 +1,19 @@
 function ResultPage({ language, nextActionLabel, progress, result, t, onContinue, onBackToModule }) {
   if (!result?.mission) {
     return (
-      <section className="page page-narrow result-page">
-        <article className="result-card">
-          <h1>Натыйжа жок</h1>
-          <button className="primary-button" onClick={onBackToModule} type="button">
+      <section className="result-app-screen">
+        <button className="result-close-button" onClick={onBackToModule} type="button" aria-label={t.back}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+        <div className="result-success-content">
+          <h1>{t.noActiveMission}</h1>
+          <button className="result-primary-button" onClick={onBackToModule} type="button">
             {t.backToModule}
           </button>
-        </article>
+        </div>
       </section>
     )
   }
@@ -15,38 +21,54 @@ function ResultPage({ language, nextActionLabel, progress, result, t, onContinue
   const { mission, rewardCapital, rewardReputation } = result
 
   return (
-    <section className="page page-narrow result-page">
-      <article className="result-card success">
-        <span className="result-mark">✓</span>
-        <span className="section-kicker">{mission.title[language]}</span>
-        <h1>{t.correct}</h1>
+    <section className="result-app-screen">
+      <button className="result-close-button" onClick={onBackToModule} type="button" aria-label={t.back}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
 
-        <div className="formula-card">
+      <article className="result-success-content">
+        <div className="result-check-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m6 12 4 4 8-9" />
+          </svg>
+        </div>
+        <h1>{t.correct} 🎉</h1>
+
+        <div className="result-explanation">
           <span>{t.explanation}</span>
           <p>{mission.explanation[language]}</p>
         </div>
 
-        <div className="reward-grid">
-          <div>
-            <span>{t.capital}</span>
-            <strong>+{rewardCapital} сом</strong>
-            <small>{t.currentCapital}: {progress.capital.toLocaleString('ru-RU')} сом</small>
+        <div className="result-rewards-grid">
+          <div className="result-reward-card">
+            <span className="result-reward-icon coin" aria-hidden="true">$</span>
+            <div>
+              <strong>+{rewardCapital} сом</strong>
+              <span>{t.capital}</span>
+            </div>
           </div>
-          <div>
-            <span>{t.reputation}</span>
-            <strong>+{rewardReputation}%</strong>
-            <small>{t.currentReputation}: {progress.reputation}%</small>
+          <div className="result-reward-card">
+            <span className="result-reward-icon shield" aria-hidden="true">◆</span>
+            <div>
+              <strong>+{rewardReputation}%</strong>
+              <span>{t.reputation}</span>
+            </div>
           </div>
         </div>
 
-        <div className="result-actions">
-          <button className="primary-button" onClick={onContinue} type="button">
-            {nextActionLabel}
-          </button>
-          <button className="secondary-button" onClick={onBackToModule} type="button">
-            {t.backToModule}
-          </button>
-        </div>
+        <button className="result-primary-button" onClick={onContinue} type="button">
+          {nextActionLabel}
+        </button>
+        <button className="result-text-button" onClick={onBackToModule} type="button">
+          {t.backToModule}
+        </button>
+
+        <p className="result-current-stats">
+          {t.currentCapital}: {progress.capital.toLocaleString('ru-RU')} сом · {t.currentReputation}: {progress.reputation}%
+        </p>
       </article>
     </section>
   )
